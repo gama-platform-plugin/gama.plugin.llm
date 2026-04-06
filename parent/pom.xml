@@ -21,8 +21,8 @@
 
     <!-- ── Modules: add one entry per plugin/feature in this repo ── -->
     <modules>
-        <module>../MY_PLUGIN</module>
-        <module>../MY_PLUGIN.feature</module>
+        <module>../gama.experimental.mcp</module>
+        <module>../gama.experimental.feature.mcp</module>
         <module>../p2updatesite</module>
     </modules>
 
