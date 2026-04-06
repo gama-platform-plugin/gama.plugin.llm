@@ -36,7 +36,7 @@ jobs:
       - name: Import JAR signing keystore
         run: |
           echo "$GAMA_KEYSTORE_BASE64" | base64 --decode > ~/gama.keystore
-          sed -i "s/<storepass>GAMA_STORE/<storepass>${GAMA_STORE}/g" parent/pom.xml
+          sed -i "s/<storepass>GAMA_STORE/<storepass>${GAMA_STORE}/g" gama.plugin.parent/pom.xml
         env:
           GAMA_KEYSTORE_BASE64: ${{ secrets.GAMA_KEYSTORE_BASE64 }}
           GAMA_STORE: ${{ secrets.GAMA_KEYSTORE_STOREPASS }}
