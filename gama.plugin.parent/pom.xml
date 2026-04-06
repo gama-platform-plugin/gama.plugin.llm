@@ -23,7 +23,7 @@
     <modules>
         <module>../gama.plugin.mcp</module>
         <module>../gama.plugin.feature.mcp</module>
-        <!-- <module>../gama.plugin.p2updatesite</module> -->
+        <module>../gama.plugin.p2updatesite</module>
     </modules>
 
     <repositories>
