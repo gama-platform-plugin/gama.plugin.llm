@@ -1,0 +1,60 @@
+name: Build and Deploy Plugin
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          java-package: jdk
+
+      - name: Prepare VPS credentials in settings.xml
+        run: |
+          sed -i "s/<username>GAMA_PLATFORM/<username>${GAMA_SERVER_USERNAME}/g" settings.xml
+          sed -i "s/<password>GAMA_PLATFORM/<password>${GAMA_SERVER_PASSWORD}/g" settings.xml
+        env:
+          GAMA_SERVER_USERNAME: ${{ secrets.GAMA_SERVER_USERNAME }}
+          GAMA_SERVER_PASSWORD: ${{ secrets.GAMA_SERVER_PASSWORD }}
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.GAMA_SERVER_SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.GAMA_SERVER_SSH_KNOWN_HOSTS }}
+          if_key_exists: replace
+
+      - name: Import JAR signing keystore
+        run: |
+          echo "$GAMA_KEYSTORE_BASE64" | base64 --decode > ~/gama.keystore
+          sed -i "s/<storepass>GAMA_STORE/<storepass>${GAMA_STORE}/g" parent/pom.xml
+        env:
+          GAMA_KEYSTORE_BASE64: ${{ secrets.GAMA_KEYSTORE_BASE64 }}
+          GAMA_STORE: ${{ secrets.GAMA_KEYSTORE_STOREPASS }}
+
+      - name: Build and deploy
+        run: bash build.sh
+        env:
+          PLUGIN_REPO_NAME: ${{ github.event.repository.name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Notify composite repo
+        if: success()
+        run: |
+          gh api "repos/${{ github.repository_owner }}/p2composite/dispatches" \
+            --field event_type=plugin-deployed \
+            --field "client_payload[repo]=${{ github.repository }}" \
+            --field "client_payload[name]=${{ github.event.repository.name }}"
+        env:
+          GH_TOKEN: ${{ secrets.ORG_DISPATCH_TOKEN }}
