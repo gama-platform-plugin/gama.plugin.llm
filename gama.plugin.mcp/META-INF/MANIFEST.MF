@@ -8,7 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-25
 Require-Bundle: gama.core;bundle-version="0.0.0",
  gama.dependencies;bundle-version="0.0.0",
  org.apache.commons.commons-io;bundle-version="2.18.0",gama.annotations,
- gama.processor,gama.api
+ gama.processor,gama.api,gama.dev
 Bundle-ClassPath: lib/api-0.31.1.jar,
  lib/jackson-annotations-2.19.0.jar,
  lib/jackson-core-2.19.0.jar,

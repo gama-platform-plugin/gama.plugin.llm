@@ -11,7 +11,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <wagon.version>3.5.3</wagon.version>
     <!-- Both overridden at build time via -D flags derived from the branch name -->
-    <gama.p2.version>2026.6</gama.p2.version>
+    <gama.p2.version>2026-06</gama.p2.version>
     <!-- Overridden at build time via -Ddeploy.subdir (= GitHub repo name) -->
     <deploy.subdir>UNKNOWN_PLUGIN</deploy.subdir>
     <eclipse.p2.version>2026-03</eclipse.p2.version>
