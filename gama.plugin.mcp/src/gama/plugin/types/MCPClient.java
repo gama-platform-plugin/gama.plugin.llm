@@ -11,13 +11,15 @@
 package gama.plugin.types;
 
 import dev.langchain4j.mcp.client.McpClient;
-import gama.core.common.interfaces.IValue;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.file.json.Json;
-import gama.core.util.file.json.JsonValue;
-import gama.gaml.types.IType;
-import gama.gaml.types.Types;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.misc.IValue;
+import gama.api.utils.json.IJson;
+import gama.api.utils.json.IJsonValue;
+import gama.core.util.json.Json;
+import gama.core.util.json.JsonValue;
 
 /**
  * The Class Predicate.
@@ -27,7 +29,7 @@ public class MCPClient implements IValue {
 	
 	
 	@Override
-	public JsonValue serializeToJson(final Json json) {
+	public IJsonValue serializeToJson(final IJson json) {
 		return json.typedObject(getGamlType(),"client", client);
 	}
 

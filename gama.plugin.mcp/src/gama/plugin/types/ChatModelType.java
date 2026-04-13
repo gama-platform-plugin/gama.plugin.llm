@@ -10,15 +10,16 @@
  ********************************************************************************************************/
 package gama.plugin.types;
 
-import gama.annotations.precompiler.GamlAnnotations.doc;
-import gama.annotations.precompiler.GamlAnnotations.type;
-import gama.annotations.precompiler.IConcept;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.IMap;
-import gama.plugin.constants.MCPConstants;
-import gama.gaml.types.GamaType;
-import gama.gaml.types.IType;
+import gama.annotations.doc;
+import gama.annotations.type;
+import gama.annotations.support.IConcept;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.gaml.types.GamaType;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.ITypesManager;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.map.IMap;
+import gama.plugin.constants.LLMConstants;
 
 /**
  * The Class Memory.
@@ -27,12 +28,17 @@ import gama.gaml.types.IType;
 		name = "chat_model",
 		id = ChatModelType.id,
 		wraps = { ChatModel.class },
-		concept = { IConcept.TYPE, MCPConstants.LLM_MODEL })
+		concept = { IConcept.TYPE, LLMConstants.LLM_MODEL })
 @doc ("represents a chat model (e.g., LLaMA, OpenAI) that allows sending messages and receiving responses in a conversational manner")
 public class ChatModelType extends GamaType<ChatModel> {
 
+	public ChatModelType(ITypesManager typesManager) {
+		super(typesManager);
+		// TODO Auto-generated constructor stub
+	}
+
 	/** The Constant id. */
-	public final static int id = IType.AVAILABLE_TYPES + 833237362;
+	public final static int id = IType.TYPE_ID + 833237362;
 
 	@Override
 	public boolean canCastToConst() {

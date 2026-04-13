@@ -22,22 +22,24 @@ import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.service.tool.ToolProviderResult;
 import dev.langchain4j.service.tool.ToolProviderResult.Builder;
-import gama.annotations.precompiler.GamlAnnotations.vars;
-import gama.core.common.interfaces.IValue;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.GamaMapFactory;
-import gama.core.util.GamaPair;
-import gama.core.util.IMap;
-import gama.core.util.file.json.Json;
-import gama.core.util.file.json.JsonValue;
-import gama.gaml.descriptions.ActionDescription;
-import gama.gaml.descriptions.ConstantExpressionDescription;
-import gama.gaml.species.ISpecies;
-import gama.gaml.statements.Arguments;
-import gama.gaml.statements.IStatement;
-import gama.gaml.types.IType;
-import gama.gaml.types.Types;
+import gama.annotations.vars;
+import gama.api.types.misc.IValue;
+import gama.api.runtime.scope.IScope;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.types.map.GamaMapFactory;
+import gama.api.types.pair.GamaPair;
+import gama.api.utils.json.IJson;
+import gama.api.utils.json.IJsonValue;
+import gama.api.types.map.IMap;
+import gama.core.util.json.Json;
+import gama.core.util.json.JsonValue;
+import gaml.compiler.descriptions.ActionDescription;
+import gaml.compiler.descriptions.ConstantExpressionDescription;
+import gama.api.kernel.species.ISpecies;
+import gama.api.gaml.symbols.Arguments;
+import gama.api.gaml.statements.IStatement;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 /**
@@ -47,9 +49,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 public class ToolProvider implements IValue {
 
 	@Override
-	public JsonValue serializeToJson(final Json json) {
+	public IJsonValue serializeToJson(final IJson json) {
 		return json.typedObject(getGamlType(), "parameters", parameters, "toolProvider", toolProvider);
-	}
+	} 
 
 	private dev.langchain4j.service.tool.ToolProvider toolProvider = null;
 	private MCPClient client = null;
@@ -87,7 +89,7 @@ public class ToolProvider implements IValue {
 				final ISpecies context = scope.getModel();
 				final IStatement.WithArgs actionTNR = context.getAction(aname);
 				final Arguments argsTNR = new Arguments();
-				argsTNR.put("msg", ConstantExpressionDescription.create(message));
+				argsTNR.put("msg", new ConstantExpressionDescription(message));
 				actionTNR.setRuntimeArgs(scope, argsTNR);
 
 				return actionTNR.executeOn(scope).toString();
@@ -126,7 +128,7 @@ public class ToolProvider implements IValue {
 				arguments.forEach((key, value) -> {
 				    // Example: Print the key and value
 //				    System.out.println(key + " = " + value);
-					argsTNR.put(key, ConstantExpressionDescription.create(value));
+					argsTNR.put(key, new ConstantExpressionDescription(value));
 
 				});
 				actionTNR.setRuntimeArgs(scope, argsTNR);
@@ -237,7 +239,7 @@ public class ToolProvider implements IValue {
 			toolProvider = (toolProviderRequest) -> {
 				Builder tb = ToolProviderResult.builder();
 				parameters.getPairs().stream().forEach(
-						(c) -> tb.add((ToolSpecification) ((GamaPair) c).key, (ToolExecutor) ((GamaPair) c).value));
+						(c) -> tb.add((ToolSpecification) ((GamaPair) c).key(), (ToolExecutor) ((GamaPair) c).value()));
 				return tb.build();
 
 			};

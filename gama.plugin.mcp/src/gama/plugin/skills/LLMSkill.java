@@ -15,24 +15,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.service.tool.ToolExecutor;
-import gama.annotations.precompiler.GamlAnnotations.action;
-import gama.annotations.precompiler.GamlAnnotations.arg;
-import gama.annotations.precompiler.GamlAnnotations.doc;
-import gama.annotations.precompiler.GamlAnnotations.skill;
-import gama.annotations.precompiler.GamlAnnotations.variable;
-import gama.annotations.precompiler.GamlAnnotations.vars;
-import gama.core.common.util.FileUtils;
-import gama.core.runtime.GAMA;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.GamaListFactory;
-import gama.core.util.IList;
+import gama.annotations.action;
+import gama.annotations.arg;
+import gama.annotations.doc;
+import gama.annotations.skill;
+import gama.annotations.variable;
+import gama.annotations.vars;
+import gama.api.GAMA;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.gaml.types.IType;
+import gama.api.kernel.skill.Skill;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.list.GamaListFactory;
+import gama.api.types.list.IList;
+import gama.api.utils.files.FileUtils;
 import gama.dev.DEBUG;
-import gama.plugin.constants.MCPConstants;
+import gama.plugin.constants.LLMConstants;
 import gama.plugin.types.Assistant;
 import gama.plugin.types.AssistantType;
 import gama.plugin.types.ChatModel;
@@ -47,19 +47,17 @@ import gama.plugin.types.Memory;
 import gama.plugin.types.MemoryType;
 import gama.plugin.types.ToolProvider;
 import gama.plugin.types.ToolProviderType;
-import gama.gaml.descriptions.ActionDescription;
-import gama.gaml.skills.Skill;
-import gama.gaml.types.IType;
+import gaml.compiler.descriptions.ActionDescription;
 
 /**
  * The Class NetworkSkill.
  */
 
-@skill(name = MCPConstants.LLM_SKILL, concept = { MCPConstants.LLM_MODEL}, doc = @doc("The " + MCPConstants.LLM_SKILL + " skill provides new features that allow agents to ask questions to a chatbot (LLM)"))
+@skill(name = LLMConstants.LLM_SKILL, concept = { LLMConstants.LLM_MODEL}, doc = @doc("The " + LLMConstants.LLM_SKILL + " skill provides new features that allow agents to ask questions to a chatbot (LLM)"))
 @vars({
- @variable(name = MCPConstants.LLM_MODEL, type = ChatModelType.id, init = "nil",doc = @doc("A chat model (to be built) that can answer questions and be used as a key element of the chat bot")),
-	@variable(name = MCPConstants.CHAT_BOT, type = AssistantType.id, init = "nil",doc = @doc("A chat bot (to be built) that can answer questions taking into account external data (RAG) and trigger actions")),
-	@variable(name = MCPConstants.CHAT_MEMORY, type = MemoryType.id, init = "nil",doc = @doc("A chat memory (to be built) that can be used to store data for the chat model"))
+ @variable(name = LLMConstants.LLM_MODEL, type = ChatModelType.id, init = "nil",doc = @doc("A chat model (to be built) that can answer questions and be used as a key element of the chat bot")),
+	@variable(name = LLMConstants.CHAT_BOT, type = AssistantType.id, init = "nil",doc = @doc("A chat bot (to be built) that can answer questions taking into account external data (RAG) and trigger actions")),
+	@variable(name = LLMConstants.CHAT_MEMORY, type = MemoryType.id, init = "nil",doc = @doc("A chat memory (to be built) that can be used to store data for the chat model"))
 }) 
 public class LLMSkill extends Skill {
 

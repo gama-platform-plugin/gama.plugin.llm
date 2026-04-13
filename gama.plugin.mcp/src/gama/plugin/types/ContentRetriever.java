@@ -10,7 +10,6 @@
  ********************************************************************************************************/
 package gama.plugin.types;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -19,13 +18,15 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
-import gama.core.common.interfaces.IValue;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.file.json.Json;
-import gama.core.util.file.json.JsonValue;
-import gama.gaml.types.IType;
-import gama.gaml.types.Types;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.misc.IValue;
+import gama.api.utils.json.IJson;
+import gama.api.utils.json.IJsonValue;
+import gama.core.util.json.Json;
+import gama.core.util.json.JsonValue;
 
 /**
  * The Class Predicate.
@@ -35,20 +36,15 @@ public class ContentRetriever implements IValue {
 	dev.langchain4j.rag.content.retriever.ContentRetriever contentRetriever = null;
 	
 	@Override
-	public JsonValue serializeToJson(final Json json) {
-		return json.typedObject(getGamlType(),"content_retriever", contentRetriever);
+	public IJsonValue serializeToJson(final IJson json) {
+		return json.typedObject(getGamlType(), "content_retriever", contentRetriever);
 	}
 
 	public ContentRetriever(Path path) {
 		List<Document> documents = null;
-		try {
-			documents = FileSystemDocumentLoader.loadAllFromDirectory(
-			          path
-			    );
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
+		documents = FileSystemDocumentLoader.loadDocuments(
+		          path
+		    ); 
 		if (documents!=null && documents.size() > 0) {
 			
 

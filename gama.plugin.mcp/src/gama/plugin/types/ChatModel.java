@@ -22,42 +22,44 @@ import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel.OllamaChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel.OpenAiChatModelBuilder;
-import gama.annotations.precompiler.GamlAnnotations.doc;
-import gama.annotations.precompiler.GamlAnnotations.getter;
-import gama.annotations.precompiler.GamlAnnotations.variable;
-import gama.annotations.precompiler.GamlAnnotations.vars;
-import gama.core.common.interfaces.IValue;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.file.json.Json;
-import gama.core.util.file.json.JsonValue;
-import gama.plugin.constants.MCPConstants;
-import gama.gaml.types.IType;
-import gama.gaml.types.Types;
+import gama.annotations.doc;
+import gama.annotations.getter;
+import gama.annotations.variable;
+import gama.annotations.vars;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
+import gama.api.runtime.scope.IScope;
+import gama.api.types.misc.IValue;
+import gama.api.utils.json.IJson;
+import gama.api.utils.json.IJsonValue;
+import gama.core.util.json.Json;
+import gama.core.util.json.JsonValue;
+import gama.plugin.constants.LLMConstants;
 
 /**
  * The Class Predicate.
  */
-@vars ({ @variable(name = MCPConstants.MODEL_TYPE, type = IType.STRING, doc = @doc("model_type specifies the chat model type: 'openai' or 'ollama'")),
-	@variable(name = MCPConstants.MODEL_NAME, type = IType.STRING, doc = @doc("model_name specifies the exact name or identifier of the language model to be used for generating responses (e.g. 'gpt-4o-mini') ")),
-	@variable(name = MCPConstants.MEMORY, type = IType.STRING, doc = @doc("memory represents the integrated memory")),
-	@variable(name = MCPConstants.OLLAMA_URL, type = IType.STRING, doc = @doc("url specifies the endpoint URL of the local or remote Ollama server that the model communicates with (for Ollama)")), // "http://localhost:11434"
-	@variable(name = MCPConstants.API_KEY, type = IType.STRING, doc = @doc("key refers to the API key used to authenticate requests to the OpenAI service (for OpenAi)")),
-	@variable(name = MCPConstants.RESPONSE_FORMAT, type = IType.STRING, doc = @doc("response_format specifies the format in which the model should return its output, such as plain text or structured JSON. 2 possible values: 'json' or 'text' (by default)")),
-	@variable(name = MCPConstants.NUM_CTX, type = IType.INT, doc = @doc("num_ctx specifies the maximum number of context tokens the model can use to process a prompt, including instructions, documents, and conversation history (for Ollama)")),
-	@variable(name = MCPConstants.NUM_PREDICT, type = IType.INT, doc = @doc("num_predict specifies the maximum number of tokens the model is allowed to generate in its response (for Ollama)")),
-	@variable(name = MCPConstants.REPEAT_PENALTY, type = IType.FLOAT, doc = @doc("repeat_penalty controls how strongly the model is discouraged from repeating the same tokens or phrases in its response (for Ollama)")),
-	@variable(name = MCPConstants.SEED, type = IType.INT, doc = @doc("seed sets the random number generator seed to make the model’s output deterministic and reproducible")),
-	@variable(name = MCPConstants.TEMPERATURE, type = IType.FLOAT, doc = @doc("temperature controls the randomness of the model’s output, with higher values producing more creative and varied responses")),
-	@variable(name = MCPConstants.TOP_K, type = IType.INT, doc = @doc("top_k limits the model’s token selection to the top K most probable tokens, influencing the diversity and focus of the generated output (for Ollama)")),
-	@variable(name = MCPConstants.TOP_P, type = IType.FLOAT, doc = @doc("top_p (nucleus sampling) sets the probability threshold for choosing the next token, allowing the model to sample from the most likely tokens whose cumulative probability exceeds this value")),
-	@variable(name = MCPConstants.FREQUENCY_PENALTY, type = IType.FLOAT, doc = @doc("frequency_penalty reduces the likelihood of the model repeating tokens by penalizing tokens based on their frequency in the generated text (for OpenAI)")),
-	@variable(name = MCPConstants.MAX_COMPLETION_TOKENS, type = IType.INT, doc = @doc("max_completion_tokens sets the maximum number of tokens the model can generate in its completion or response (for OpenAI)")),
-	@variable(name = MCPConstants.MAX_RETRIES, type = IType.INT, doc = @doc("max_retries specifies the maximum number of times the system will retry a failed request to the model (for OpenAI)")),
-	@variable(name = MCPConstants.MAX_TOKENS, type = IType.INT, doc = @doc("max_tokens defines the total maximum number of tokens allowed for both the input (prompt) and the output (completion) combined (for OpenAI)")),
-	@variable(name = MCPConstants.PRESENCE_PENALTY, type = IType.FLOAT, doc = @doc("presence_penalty reduces the likelihood of the model mentioning new topics or tokens that have already appeared, encouraging more diverse and novel content (for OpenAI)")),
-	@variable(name = MCPConstants.STORE, type = IType.BOOL, doc = @doc("store is a boolean that indicates whether the generated data (such as embeddings or chat history) should be saved or not (for OpenAI)")),
-	@variable(name = MCPConstants.TIME_OUT, type = IType.INT, doc = @doc("timeout specifies the maximum amount of time the system will wait for a response from the model before aborting the request (for OpenAI)"))})
+@vars ({ @variable(name = LLMConstants.MODEL_TYPE, type = IType.STRING, doc = @doc("model_type specifies the chat model type: 'openai' or 'ollama'")),
+	@variable(name = LLMConstants.MODEL_NAME, type = IType.STRING, doc = @doc("model_name specifies the exact name or identifier of the language model to be used for generating responses (e.g. 'gpt-4o-mini') ")),
+	@variable(name = LLMConstants.MEMORY, type = IType.STRING, doc = @doc("memory represents the integrated memory")),
+	@variable(name = LLMConstants.OLLAMA_URL, type = IType.STRING, doc = @doc("url specifies the endpoint URL of the local or remote Ollama server that the model communicates with (for Ollama)")), // "http://localhost:11434"
+	@variable(name = LLMConstants.API_KEY, type = IType.STRING, doc = @doc("key refers to the API key used to authenticate requests to the OpenAI service (for OpenAi)")),
+	@variable(name = LLMConstants.RESPONSE_FORMAT, type = IType.STRING, doc = @doc("response_format specifies the format in which the model should return its output, such as plain text or structured JSON. 2 possible values: 'json' or 'text' (by default)")),
+	@variable(name = LLMConstants.NUM_CTX, type = IType.INT, doc = @doc("num_ctx specifies the maximum number of context tokens the model can use to process a prompt, including instructions, documents, and conversation history (for Ollama)")),
+	@variable(name = LLMConstants.NUM_PREDICT, type = IType.INT, doc = @doc("num_predict specifies the maximum number of tokens the model is allowed to generate in its response (for Ollama)")),
+	@variable(name = LLMConstants.REPEAT_PENALTY, type = IType.FLOAT, doc = @doc("repeat_penalty controls how strongly the model is discouraged from repeating the same tokens or phrases in its response (for Ollama)")),
+	@variable(name = LLMConstants.SEED, type = IType.INT, doc = @doc("seed sets the random number generator seed to make the model’s output deterministic and reproducible")),
+	@variable(name = LLMConstants.TEMPERATURE, type = IType.FLOAT, doc = @doc("temperature controls the randomness of the model’s output, with higher values producing more creative and varied responses")),
+	@variable(name = LLMConstants.TOP_K, type = IType.INT, doc = @doc("top_k limits the model’s token selection to the top K most probable tokens, influencing the diversity and focus of the generated output (for Ollama)")),
+	@variable(name = LLMConstants.TOP_P, type = IType.FLOAT, doc = @doc("top_p (nucleus sampling) sets the probability threshold for choosing the next token, allowing the model to sample from the most likely tokens whose cumulative probability exceeds this value")),
+	@variable(name = LLMConstants.FREQUENCY_PENALTY, type = IType.FLOAT, doc = @doc("frequency_penalty reduces the likelihood of the model repeating tokens by penalizing tokens based on their frequency in the generated text (for OpenAI)")),
+	@variable(name = LLMConstants.MAX_COMPLETION_TOKENS, type = IType.INT, doc = @doc("max_completion_tokens sets the maximum number of tokens the model can generate in its completion or response (for OpenAI)")),
+	@variable(name = LLMConstants.MAX_RETRIES, type = IType.INT, doc = @doc("max_retries specifies the maximum number of times the system will retry a failed request to the model (for OpenAI)")),
+	@variable(name = LLMConstants.MAX_TOKENS, type = IType.INT, doc = @doc("max_tokens defines the total maximum number of tokens allowed for both the input (prompt) and the output (completion) combined (for OpenAI)")),
+	@variable(name = LLMConstants.PRESENCE_PENALTY, type = IType.FLOAT, doc = @doc("presence_penalty reduces the likelihood of the model mentioning new topics or tokens that have already appeared, encouraging more diverse and novel content (for OpenAI)")),
+	@variable(name = LLMConstants.STORE, type = IType.BOOL, doc = @doc("store is a boolean that indicates whether the generated data (such as embeddings or chat history) should be saved or not (for OpenAI)")),
+	@variable(name = LLMConstants.TIME_OUT, type = IType.INT, doc = @doc("timeout specifies the maximum amount of time the system will wait for a response from the model before aborting the request (for OpenAI)"))})
 public class ChatModel implements IValue {
 
 	private String modelType;
@@ -81,11 +83,7 @@ public class ChatModel implements IValue {
 	private Integer timeOut;
 	private dev.langchain4j.model.chat.ChatModel model;
 	private Memory memory;
-	
-	@Override
-	public JsonValue serializeToJson(final Json json) {
-		return json.typedObject(getGamlType(),"model", model);
-	}
+	 
 	
 	public ChatModel(String modelnameToBuild, String urlToBuild, String responseFormat,Integer numCtx, Integer seed, Double temperature, Double topP, Integer numPredict, Double repeatPenalty,  Integer topK) {
 		super();
@@ -131,6 +129,7 @@ public class ChatModel implements IValue {
 			modelTobuild = modelTobuild.topK(topK);
 			this.topK = topK;
 		}
+		modelTobuild=modelTobuild.timeout(Duration.ofMillis(1200000));
 		model = modelTobuild.logRequests(true).build();
 		
 
@@ -211,121 +210,121 @@ public class ChatModel implements IValue {
 	
 	}
 
-	@getter (MCPConstants.MEMORY)
+	@getter (LLMConstants.MEMORY)
 	public Memory getMemory() {
 		return memory;
 	}
 
 	
-	@getter (MCPConstants.MODEL_TYPE)
+	@getter (LLMConstants.MODEL_TYPE)
 	public String getModelType() {
 		return modelType;
 	}
 
 
-	@getter (MCPConstants.MODEL_NAME)
+	@getter (LLMConstants.MODEL_NAME)
 	public String getModelName() {
 		return modelName;
 	}
 
 
-	@getter (MCPConstants.OLLAMA_URL)
+	@getter (LLMConstants.OLLAMA_URL)
 	public String getOllamaUrl() {
 		return OllamaUrl;
 	}
 
 
-	@getter (MCPConstants.API_KEY)
+	@getter (LLMConstants.API_KEY)
 	public String getApiKey() {
 		return ApiKey;
 	}
 
 
-	@getter (MCPConstants.RESPONSE_FORMAT)
+	@getter (LLMConstants.RESPONSE_FORMAT)
 	public String getResponseFormat() {
 		return responseFormat;
 	}
 
 
-	@getter (MCPConstants.NUM_CTX)
+	@getter (LLMConstants.NUM_CTX)
 	public Integer getNumCtx() {
 		return numCtx;
 	}
 
 
-	@getter (MCPConstants.NUM_PREDICT)
+	@getter (LLMConstants.NUM_PREDICT)
 	public Integer getNiumPredict() {
 		return numPredict;
 	}
 
 
-	@getter (MCPConstants.REPEAT_PENALTY)
+	@getter (LLMConstants.REPEAT_PENALTY)
 	public Double getRepeatPenalty() {
 		return repeatPenalty;
 	}
 
 
-	@getter (MCPConstants.SEED)
+	@getter (LLMConstants.SEED)
 	public Integer getSeed() {
 		return seed;
 	}
 
 
-	@getter (MCPConstants.TEMPERATURE)
+	@getter (LLMConstants.TEMPERATURE)
 	public Double getTemperature() {
 		return temperature;
 	}
 
 
-	@getter (MCPConstants.TOP_K)
+	@getter (LLMConstants.TOP_K)
 	public Integer getTopK() {
 		return topK;
 	}
 
 
-	@getter (MCPConstants.TOP_P)
+	@getter (LLMConstants.TOP_P)
 	public Double getTopP() {
 		return topP;
 	}
 
 
-	@getter (MCPConstants.FREQUENCY_PENALTY)
+	@getter (LLMConstants.FREQUENCY_PENALTY)
 	public Double getFrequencyPenalty() {
 		return frequencyPenalty;
 	}
 
 
-	@getter (MCPConstants.MAX_COMPLETION_TOKENS)
+	@getter (LLMConstants.MAX_COMPLETION_TOKENS)
 	public Integer getMaxCompletionTokens() {
 		return maxCompletionTokens;
 	}
 
 
-	@getter (MCPConstants.MAX_RETRIES)
+	@getter (LLMConstants.MAX_RETRIES)
 	public Integer getMaxRetries() {
 		return maxRetries;
 	}
 
 
-	@getter (MCPConstants.MAX_TOKENS)
+	@getter (LLMConstants.MAX_TOKENS)
 	public Integer getMaxTokens() {
 		return maxTokens;
 	}
 
 
-	@getter (MCPConstants.PRESENCE_PENALTY)
+	@getter (LLMConstants.PRESENCE_PENALTY)
 	public Double getPresencePenalty() {
 		return presencePenalty;
 	}
 
 
-	@getter (MCPConstants.STORE)
+	@getter (LLMConstants.STORE)
 	public Boolean getStore() {
 		return store;
 	}
 
 
-	@getter (MCPConstants.TIME_OUT)
+	@getter (LLMConstants.TIME_OUT)
 	public Integer getTimeOut() {
 		return timeOut;
 	}
@@ -402,5 +401,11 @@ public class ChatModel implements IValue {
 	 */ 
 	@Override
 	public IType<?> getGamlType() { return Types.get(ChatModelType.id); }
+
+	@Override
+	public IJsonValue serializeToJson(IJson json) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

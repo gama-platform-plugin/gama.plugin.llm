@@ -13,14 +13,16 @@ package gama.plugin.types;
 
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.service.AiServices;
-import gama.annotations.precompiler.GamlAnnotations.vars;
-import gama.core.common.interfaces.IValue;
-import gama.core.runtime.IScope;
-import gama.core.runtime.exceptions.GamaRuntimeException;
-import gama.core.util.file.json.Json;
-import gama.core.util.file.json.JsonValue;
-import gama.gaml.types.IType;
-import gama.gaml.types.Types;
+import gama.annotations.vars;
+import gama.api.types.misc.IValue;
+import gama.api.utils.json.IJson;
+import gama.api.utils.json.IJsonValue;
+import gama.api.runtime.scope.IScope;
+import gama.api.exceptions.GamaRuntimeException;
+import gama.core.util.json.Json;
+import gama.core.util.json.JsonValue;
+import gama.api.gaml.types.IType;
+import gama.api.gaml.types.Types;
 
 /**
  * The Class Predicate.
@@ -34,12 +36,7 @@ public class Assistant implements IValue {
      }
 
 	
-	 AIAssistant assistant;
-	
-	@Override
-	public JsonValue serializeToJson(final Json json) {
-		return json.typedObject(getGamlType(),"assistant", assistant);
-	}
+	 AIAssistant assistant; 
 
 	Memory memory = null;
 	ChatModel chatModel = null;
@@ -141,5 +138,12 @@ public class Assistant implements IValue {
 	 */
 	@Override
 	public IType<?> getGamlType() { return Types.get(AssistantType.id); }
+
+
+	@Override
+	public IJsonValue serializeToJson(IJson json) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }
