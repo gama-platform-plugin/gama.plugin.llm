@@ -32,8 +32,9 @@ By using the tool `create_a_new_tool`, you must give this tool the json string t
 	string msg2 <- "Give a concrete example implementation of the first point? Be short, 10 lines of code maximum.";
 	list<string> msgto <- [msg1, msg2];
 
-	action toto {
+	string toto() {
 		create cricket;
+		return "ok";
 	}
 
 	string tata(unknown a1) {
