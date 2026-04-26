@@ -11,15 +11,15 @@ global {
 
 
 	init {
-		create Agent_without_RAG with:(color: #red);
-		create Agent_with_RAG with:(color: #green);
+		create Agent_without_RAG(color: #red);
+		create Agent_with_RAG(color: #green);
 		
 		ask Agent_without_RAG {
 			chat_bot <- create_assistant(llm:llm);
 			
 		} 
 		ask Agent_with_RAG {
-			content_retriever cr <- create_rag("../includes/RAG");
+			content_retriever cr <- create_rag("../includes/RAG/");
 			memory mem <- create_chat_memory(llm,"You are an expert assistant who only answers using the provided documents");
 			chat_bot <- create_assistant(llm:llm, content_retriever: cr, memory:mem);
 		} 
