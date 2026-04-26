@@ -38,7 +38,7 @@ Do not include any explanatory text—only the list in the specified format.";
 
 	
 	init {
-		create building from: shape_file_buildings with: [type::string(read ("NATURE"))] {
+		create building(type:string(read ("NATURE"))) from: shape_file_buildings   {
 			if type="Industrial" {
 				color <- #blue ;
 			}
@@ -55,7 +55,7 @@ Do not include any explanatory text—only the list in the specified format.";
 		write sample(role);
 		write sample(msg);
 		create genPop {
-			llm <- create_ollama_chat_model( url: "http://localhost:11434", model_name: "llama3.1");
+			llm <- create_ollama_chat_model( url: "http://localhost:11434", model_name: "llama3.2");
 		//	chat_memory <- create_chat_memory(role:role);	
 		}	
 		
@@ -69,10 +69,10 @@ Do not include any explanatory text—only the list in the specified format.";
 				write l;
 				
 				loop elt over: l {
-					create people with:[name::elt[0],gender::elt[1]];
+					create people (name::elt[0],gender::elt[1]);
 				}	
 			} catch {
-				create people number: nb_people with:[gender::(flip(0.5)?'M':'F')];				
+				create people(gender:(flip(0.5)?'M':'F')) number: nb_people ;				
 			}
 			
 			ask people {
@@ -92,7 +92,7 @@ Do not include any explanatory text—only the list in the specified format.";
 				role <- "I am " + name + ". I am " + ((gender = 'M') ? "a man. " : "a woman. ");
 				role <- role + "My workplace is " + distance_to_work + " meters away. ";
 				
-				llm_people <- create_ollama_chat_model( url: "http://localhost:11434", model_name: "llama3.1");
+				llm_people <- create_ollama_chat_model( url: "http://localhost:11434", model_name: "llama3.2");
 				
 				write role + " has been created.";
 			}
@@ -178,7 +178,7 @@ species people skills:[moving,llm] {
 	} 
 	 
 	reflex move when: the_target != nil {
-		do goto target: the_target on: the_graph ; 
+		do goto( target: the_target, on: the_graph ); 
 		if the_target = location {
 			the_target <- nil ;
 		}

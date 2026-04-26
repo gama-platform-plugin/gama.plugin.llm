@@ -73,7 +73,7 @@ global {
 
 	
 	reflex end_sim when: empty(Farmer where each.wish_to_talk){
-		do pause;
+		do pause();
 	}
 
 } 
@@ -94,11 +94,11 @@ species Farmer skills: [llm] {
 	string last_word <- "";
 	float proba_chatting ;
 	
-	string adoption_current {
+	string adoption_current() {
 		return (adoption ? " You are a user of smart water meters" : " You are not a user of smart water meters");
 	
 	}
-	string read_attribute {
+	string read_attribute() {
 		string mess <- "";
 		if confidence_level = 1 {
 			mess <- " You are very unsure of yourself and can easily change your mind about using smart water meters.";
@@ -132,7 +132,7 @@ species Farmer skills: [llm] {
 		last_word <- msg;
 		speak_with <- to_who;
 		ask experiment {
-			do update_outputs;
+			do update_outputs();
 		}
 
 		write ("\n" + name + " to " + to_who.name + " -> " + (msg)) color: color;
@@ -156,7 +156,7 @@ species Farmer skills: [llm] {
 			}  
 
 			ask experiment { 
-				do update_outputs;
+				do update_outputs();
 			}  
 		}
 
@@ -174,7 +174,7 @@ species Farmer skills: [llm] {
 
 		last_word <- last_word + "\n" + continue_str;
 		ask experiment {
-			do update_outputs;
+			do update_outputs();
 		} 
 	}
 
