@@ -70,7 +70,7 @@ By using the tool `create_a_new_tool`, you must give this tool the json string t
 		return ret;
 	}
 
-	string llm_name <- "qwen3:30b";
+	string llm_name <- "qwen3.5:latest";
 //	string request_msg <- "what is the weather now in new york?";
 	string request_msg <- "what is the square root of 2?";
 
@@ -106,10 +106,10 @@ species A skills: [llm] {
 	string mymsg;
 
 	reflex chating {
-		do add_to_memory message: mymsg memory: chat_memory;
+		do add_to_memory(message: mymsg, memory: chat_memory);
 		mymsg <- send_to_assistant(assistant: chat_bot, message: mymsg);
 		write mymsg;
-		do add_to_memory message: mymsg memory: chat_memory;
+		do add_to_memory(message: mymsg, memory: chat_memory);
 	} }
 
 species cricket {
