@@ -14,7 +14,7 @@ else
 fi
 
 cd "${ROOT}/gama.plugin.parent"
-mvn clean install -B \
+mvn clean install -B -T 4 \
     -Dgama.p2.version="${GAMA_P2_VERSION}" \
     -Ddeploy.subdir="${PLUGIN_REPO_NAME}" \
     -Dtycho.p2.transport.min-cache-minutes=0 \
