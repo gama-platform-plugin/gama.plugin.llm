@@ -19,7 +19,7 @@ Bundle-ClassPath: lib/api-0.31.1.jar,
  lib/jackson-databind-2.19.0.jar,
  lib/jspecify-1.0.0.jar,
  lib/jtokkit-1.1.0.jar,
- lib/langchain4j-document-parser-apache-tika-1.9.1-beta17.jar,
+ lib/langchain4j-document-parser-apache-tika-1.9.1-beta17.jar,\
  lib/langchain4j-embeddings-1.9.0-beta16.jar,
  lib/langchain4j-embeddings-bge-small-en-v15-q-1.9.0-beta16.jar,
  lib/langchain4j-http-client-jdk-1.1.0.jar,
