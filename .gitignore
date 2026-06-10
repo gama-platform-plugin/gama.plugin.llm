@@ -1,4 +1,4 @@
 **/target/
 **/bin/
 /*/gaml
-gama.plugin.mcp/lib/
+# gama.plugin.mcp/lib/
