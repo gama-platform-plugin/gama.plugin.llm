@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Gaml.MCP extension
-Bundle-SymbolicName: gama.plugin.mcp;singleton:=true
+Bundle-Name: Gaml.LLM extension
+Bundle-SymbolicName: gama.plugin.llm;singleton:=true
 Bundle-Vendor: CICT-MIAT
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-25
@@ -71,4 +71,4 @@ Export-Package: gama.plugin.constants,
  gama.plugin.skills,
  gama.plugin.types
 Bundle-ActivationPolicy: lazy
-Automatic-Module-Name: gama.plugin.mcp
+Automatic-Module-Name: gama.plugin.llm

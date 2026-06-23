@@ -18,8 +18,8 @@
   </properties>
   <!-- ── Modules: add one entry per plugin/feature in this repo ── -->
   <modules>
-    <module>../gama.plugin.mcp</module>
-    <module>../gama.plugin.feature.mcp</module>
+    <module>../gama.plugin.llm</module>
+    <module>../gama.plugin.feature.llm</module>
     <module>../gama.plugin.p2updatesite</module>
   </modules>
   <repositories>

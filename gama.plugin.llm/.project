@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>gama.plugin.mcp</name>
-	<comment>mcp plugin</comment>
+	<name>gama.plugin.llm</name>
+	<comment>llm plugin</comment>
         <projects>
         </projects>
         <buildSpec>

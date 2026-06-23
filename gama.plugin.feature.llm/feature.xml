@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="gama.plugin.feature.mcp"
-      label="MCP"
+      id="gama.plugin.feature.llm"
+      label="LLM"
       version="1.0.0.qualifier"
       provider-name="CICT">
 
@@ -22,7 +22,7 @@
    </url>
 
    <plugin
-         id="gama.plugin.mcp"
+         id="gama.plugin.llm"
          version="0.0.0"/>
 
 </feature>
