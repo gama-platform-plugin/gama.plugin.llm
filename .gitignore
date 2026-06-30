@@ -1,4 +1,4 @@
 **/target/
 **/bin/
 /*/gaml
-# gama.plugin.llm/lib/
+gama.plugin.llm/lib/

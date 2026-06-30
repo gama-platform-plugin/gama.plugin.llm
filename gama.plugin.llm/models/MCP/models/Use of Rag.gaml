@@ -24,7 +24,7 @@ global {
 			chat_bot <- create_assistant(llm:llm, content_retriever: cr, memory:mem);
 		} 
 		
-		string question <- "Who is Jonh Doe?";
+		string question <- "When was John Doe born?";
 		write " ***** " + question + " ***** " ;
 		ask first(Agent_without_RAG) {do answer_question(question);}
 		ask first(Agent_with_RAG) {do answer_question(question);}
@@ -37,7 +37,7 @@ global {
 species LLM_Agent skills: [llm] {
 	rgb color;
 	init {
-		llm <- create_ollama_chat_model( url: "http://localhost:11434", model_name: "llama3.2");
+		llm <- create_ollama_chat_model( url: "http://localhost:11434", model_name: "qwen3.5:0.8b");
 	}
 	
 	action answer_question(string question) {
