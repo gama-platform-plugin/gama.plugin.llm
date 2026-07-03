@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+    <extension point="gaml.extension"></extension>
+    <extension point="gama.display">
+       <implementation class="gama.ui.display.webrtc.view.WebRTCDisplaySurface" keyword="webrtc"/>
+    </extension>
+    <extension point="org.eclipse.ui.views">
+       <view
+             allowMultiple="true"
+             category="gama.ui.category.gama"
+             class="gama.ui.display.webrtc.view.WebRTCDisplayView"
+             icon="platform:/plugin/gama.ui.shared/icons_svg/light/views/tabs/view.display.svg"
+             id="gama.ui.application.view.OpenGLDisplayView.WebRTC"
+             name="WebRTC Display"
+             restorable="false">
+       </view>
+    </extension>
+</plugin>

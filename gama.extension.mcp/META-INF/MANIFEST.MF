@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: MCP
+Bundle-SymbolicName: gama.extension.mcp;singleton:=true
+Bundle-Version: 0.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-25
+Export-Package: gama.extension.mcp
+Import-Package: org.java_websocket,
+ org.java_websocket.handshake,
+ org.java_websocket.server
+Require-Bundle: gama.core,
+ gama.extension.network,
+ gama.dependencies,
+ gaml.compiler
+Bundle-ActivationPolicy: lazy
+Automatic-Module-Name: gama.extension.mcp
+DynamicImport-Package: *

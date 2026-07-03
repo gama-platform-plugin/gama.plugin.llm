@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>GAMA Stream</title>
+<style>
+body{margin:0;background:#111;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:sans-serif}
+#status{color:#888;margin-top:12px;font-size:14px;margin-bottom:12px}
+#grid{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;width:100%;flex:1;gap:15px;padding:15px;box-sizing:border-box}
+#grid canvas{max-width:45vw;max-height:45vh;border-radius:4px;box-shadow:0 0 20px rgba(0,0,0,.5)}
+</style></head>
+<body>
+<div id="status">Connecting...</div>
+<div id="grid"></div>
+<script>
+const host = window.location.hostname || "localhost";
+const port = window.location.port || 8082;
+const base = "http://" + host + ":" + port;
+
+if (window.location.protocol === "file:") {
+  window.location.replace(base + "/viewer.html");
+}
+
+const grid = document.getElementById("grid");
+const status = document.getElementById("status");
+
+async function refresh() {
+  try {
+    const res = await fetch(base + "/api/displays");
+    const ids = await res.json();
+    status.textContent = ids.length + " display(s)";
+    for (const id of ids) {
+      if (!document.getElementById("cvs-" + id)) {
+        const cvs = document.createElement("canvas");
+        cvs.id = "cvs-" + id;
+        grid.appendChild(cvs);
+        pollFrame(id, cvs);
+      }
+    }
+  } catch (e) {
+    status.textContent = "Retrying...";
+  }
+  setTimeout(refresh, 2000);
+}
+
+async function pollFrame(id, cvs) {
+  const ctx = cvs.getContext("2d");
+  let etag = "";
+  while (true) {
+    try {
+      const headers = {};
+      if (etag) headers["If-None-Match"] = etag;
+      const res = await fetch(base + "/frame/" + id, { headers });
+      if (res.status === 200) {
+        const blob = await res.blob();
+        const bitmap = await createImageBitmap(blob);
+        cvs.width = bitmap.width;
+        cvs.height = bitmap.height;
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        etag = res.headers.get("ETag") || "";
+      }
+    } catch (e) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+}
+
+refresh();
+</script>
+</body>
+</html>
