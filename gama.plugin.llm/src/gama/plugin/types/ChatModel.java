@@ -14,6 +14,8 @@ package gama.plugin.types;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -208,6 +210,41 @@ public class ChatModel implements IValue {
 			}
 			return response.aiMessage().text();
 	
+	}
+
+	/**
+	 * Non-blocking version of askQuestion. Returns a Callable that, when executed,
+	 * performs the LLM call and returns the result. The prompt is added to memory
+	 * synchronously (caller's thread), but the answer is added to memory only when
+	 * the result is consumed (via addAnswerToMemoryToMemory).
+	 * 
+	 * @param prompt the prompt to send
+	 * @param addPromptToMemory whether to add the prompt to memory now (synchronous)
+	 * @param addAnswerToMemory whether to add the answer to memory when consumed
+	 * @param UseMemory whether to use memory at all
+	 * @return a Callable that produces the LLM response text
+	 */
+	public Callable<String> askQuestionAsync(String prompt, boolean addPromptToMemory, boolean addAnswerToMemory, boolean UseMemory) {
+		// Add prompt to memory synchronously (on agent's thread)
+		if (UseMemory && memory != null && addPromptToMemory)
+			memory.addToMemory(prompt);
+		
+		// Capture the conversation state now (on agent's thread)
+		List<ChatMessage> fullConversation = (UseMemory && memory != null) ? new ArrayList<>(memory.getMemory().messages()) : new ArrayList<>();
+		UserMessage currentMessage = UserMessage.from(prompt);
+		fullConversation.add(currentMessage);
+		
+		final boolean finalAddAnswer = addAnswerToMemory;
+		final boolean finalUseMemory = UseMemory;
+		
+		// Return a Callable that will run on a background thread
+		return () -> {
+			ChatResponse response = model.chat(fullConversation);
+			if (finalUseMemory && memory != null && finalAddAnswer) {
+				memory.getMemory().add(response.aiMessage());
+			}
+			return response.aiMessage().text();
+		};
 	}
 
 	@getter (LLMConstants.MEMORY)

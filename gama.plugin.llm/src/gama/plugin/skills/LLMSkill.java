@@ -35,6 +35,7 @@ import gama.dev.DEBUG;
 import gama.plugin.constants.LLMConstants;
 import gama.plugin.types.Assistant;
 import gama.plugin.types.AssistantType;
+import gama.plugin.types.AsyncLLMManager;
 import gama.plugin.types.ChatModel;
 import gama.plugin.types.ChatModelType;
 import gama.plugin.types.ContentRetriever;
@@ -341,6 +342,77 @@ public class LLMSkill extends Skill {
 		final Assistant assistant = (Assistant) scope.getArg("assistant",  AssistantType.id);
 		return assistant.askQuestion(msgToAdd);
 
+	}
+	
+	@action(name = "send_to_llm_async", args = { @arg(name = "llm", type = ChatModelType.id, doc = @doc("llm specifies the chat model that will respond to the given message"), optional = false),
+			@arg(name = "message", type = IType.STRING, doc = @doc("message specifies the prompt sent to the chat model"), optional = false),
+			@arg(name = "add_message_to_memory", type = IType.BOOL, doc = @doc("add_message_to_memory specifies if the message sent has to be added to the memory or not"), optional = true),
+			@arg(name = "add_answer_to_memory", type = IType.BOOL, doc = @doc("add_answer_to_memory specifies if the message answered by the chat model has to be added to the memory or not"), optional = true) },
+			doc = @doc(value = "Action that sends a message (prompt) to a chat_model asynchronously without blocking the agent. Returns a request_id that can be used with get_llm_result to retrieve the response when it is ready.", returns = "A string request_id, or nil if the model is nil"))
+	public String send_to_llm_async(final IScope scope) {
+		boolean addPromptToMemory = scope.hasArg("add_message_to_memory") ? scope.getBoolArg("add_message_to_memory") : false;
+		boolean addAnswerToMemory = scope.hasArg("add_answer_to_memory") ? scope.getBoolArg("add_answer_to_memory") : false;
+		final String msgToAdd = (String) scope.getArg("message", IType.STRING);
+		final ChatModel model = (ChatModel) scope.getArg("llm", ChatModelType.id);
+		if (model != null) {
+			java.util.concurrent.Callable<String> task = model.askQuestionAsync(msgToAdd, true, addPromptToMemory, addAnswerToMemory);
+			return AsyncLLMManager.getInstance().submit(task);
+		}
+		return null;
+	}
+
+	@action(name = "send_to_llm_async_without_memory", args = { @arg(name = "llm", type = ChatModelType.id, doc = @doc("llm specifies the chat model that will respond to the given message"), optional = false),
+			@arg(name = "message", type = IType.STRING, doc = @doc("message specifies the prompt sent to the chat model"), optional = false) },
+			doc = @doc(value = "Action that sends a message (prompt) to a chat_model asynchronously without blocking the agent and without using memory. Returns a request_id that can be used with get_llm_result to retrieve the response when it is ready.", returns = "A string request_id, or nil if the model is nil"))
+	public String send_to_llm_async_without_memory(final IScope scope) {
+		final String msgToAdd = (String) scope.getArg("message", IType.STRING);
+		final ChatModel model = (ChatModel) scope.getArg("llm", ChatModelType.id);
+		if (model != null) {
+			java.util.concurrent.Callable<String> task = model.askQuestionAsync(msgToAdd, false, false, false);
+			return AsyncLLMManager.getInstance().submit(task);
+		}
+		return null;
+	}
+
+	@action(name = "send_to_assistant_async", args = {
+			@arg(name = "assistant", type = AssistantType.id, doc = @doc("assistant specifies the assistant that will respond to the given message")),
+			@arg(name = "message", type = IType.STRING, doc = @doc("message specifies the prompt sent to the assistant")) },
+			doc = @doc(value = "Action that sends a message (prompt) to an assistant asynchronously without blocking the agent. Returns a request_id that can be used with get_llm_result to retrieve the response when it is ready.", returns = "A string request_id, or nil if the assistant is nil"))
+	public String send_to_assistant_async(final IScope scope) {
+		final String msgToAdd = (String) scope.getArg("message", IType.STRING);
+		final Assistant assistant = (Assistant) scope.getArg("assistant", AssistantType.id);
+		if (assistant != null) {
+			java.util.concurrent.Callable<String> task = assistant.askQuestionAsync(msgToAdd);
+			return AsyncLLMManager.getInstance().submit(task);
+		}
+		return null;
+	}
+
+	@action(name = "get_llm_result", args = {
+			@arg(name = "request_id", type = IType.STRING, doc = @doc("request_id specifies the request returned by send_to_llm_async or send_to_assistant_async")) },
+			doc = @doc(value = "Action that retrieves the result of an asynchronous LLM request. Returns the response text if ready, or nil if still processing.", returns = "The response text from the LLM, or nil if not ready yet"))
+	public String get_llm_result(final IScope scope) {
+		final String requestId = (String) scope.getArg("request_id", IType.STRING);
+		if (requestId == null) return null;
+		return AsyncLLMManager.getInstance().getResult(requestId);
+	}
+
+	@action(name = "has_llm_result", args = {
+			@arg(name = "request_id", type = IType.STRING, doc = @doc("request_id specifies the request returned by send_to_llm_async or send_to_assistant_async")) },
+			doc = @doc(value = "Action that checks if an asynchronous LLM request has completed.", returns = "true if the result is ready, false otherwise"))
+	public Boolean has_llm_result(final IScope scope) {
+		final String requestId = (String) scope.getArg("request_id", IType.STRING);
+		if (requestId == null) return false;
+		return AsyncLLMManager.getInstance().isReady(requestId);
+	}
+
+	@action(name = "cancel_llm_request", args = {
+			@arg(name = "request_id", type = IType.STRING, doc = @doc("request_id specifies the request to cancel")) },
+			doc = @doc(value = "Action that cancels a pending asynchronous LLM request.", returns = "true if the request was cancelled, false if it was already completed or not found"))
+	public Boolean cancel_llm_request(final IScope scope) {
+		final String requestId = (String) scope.getArg("request_id", IType.STRING);
+		if (requestId == null) return false;
+		return AsyncLLMManager.getInstance().cancel(requestId);
 	}
 	
 

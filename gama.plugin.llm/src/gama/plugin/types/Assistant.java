@@ -11,6 +11,8 @@
 package gama.plugin.types;
 
 
+import java.util.concurrent.Callable;
+
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.service.AiServices;
 import gama.annotations.vars;
@@ -75,7 +77,15 @@ public class Assistant implements IValue {
 	
 	public String askQuestion(String prompt) {
 		return assistant.chat(prompt);
-	}	
+	}
+	
+	/**
+	 * Non-blocking version of askQuestion. Returns a Callable that, when executed,
+	 * performs the LLM call (with tools/RAG/memory handled by AiServices).
+	 */
+	public Callable<String> askQuestionAsync(String prompt) {
+		return () -> assistant.chat(prompt);
+	}
 	
 	
 	
