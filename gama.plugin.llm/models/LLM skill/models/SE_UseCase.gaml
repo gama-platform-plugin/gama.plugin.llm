@@ -1,9 +1,12 @@
 model SE_UseCase
 
 global {
-//	string llmname <- "hf.co/empero-ai/Qwen3.8-2B-GGUF:BF16";
-//	string llmname <- "hf.co/empero-ai/Qwen3.8-2B-GGUF:Q4_K_M";
 	string llmname <- "gemma4:e2b-mlx";
+
+	// Virtual universe environment
+	float universe_radius <- 200.0;
+	geometry shape <- sphere(universe_radius * 2) ;
+	bool torus_environment <- false;
 
 	// Global caller tracking
 	string active_caller <- "System";
@@ -116,7 +119,7 @@ global {
 			return "Error registering tool: " + #current_error;
 		}
 	}
-
+	
 	// Tool: create_team_lead (used by Manager)
 	string create_team_lead (string domain_task, string lead_name) {
 		write "========================================";
@@ -128,7 +131,7 @@ global {
 		int lead_idx <- length(AI_TeamLead);
 		create AI_TeamLead {
 			name <- lead_name;
-			location <- {25.0 + (lead_idx * 50.0), 45.0};
+			location <- {25.0 + (lead_idx * 50.0), 45.0, 20.0};
 			registered_tools <- ["create_developer", "assign_dev_task", "compile_file", "run_command"];
 			llm <- create_ollama_chat_model(url: "http://localhost:11434", model_name: llmname);
 			chat_memory <- create_chat_memory(llm, "You are an autonomous Tech Lead for the " + lead_name + " domain. You have NO chat partner. EVERY action you take MUST be a tool call (create_developer or assign_dev_task or compile_file or run_command). You MUST NEVER ask anyone to provide code or information to you in text.\n\nYour workflow:\n1. Decompose your domain task into individual class modules.\n2. Create Developer agents using create_developer.\n3. Assign tasks to Developers using assign_dev_task (include FULL class spec and package path).\n4. When developers report back, verify with compile_file.\n5. Only AFTER compile_file confirms success, output your domain status.");
@@ -220,7 +223,7 @@ global {
 		int dev_idx <- length(AI_Developer);
 		create AI_Developer {
 			name <- dev_name;
-			location <- {15.0 + (dev_idx * 20.0), 80.0};
+			location <- {15.0 + (dev_idx * 20.0), 80.0, 0.0};
 			registered_tools <- ["save_file", "compile_file", "run_command", "create_custom_tool"];
 			llm <- create_ollama_chat_model(url: "http://localhost:11434", model_name: llmname);
 			chat_memory <- create_chat_memory(llm, "You are an autonomous Java Software Developer (" + dev_name + "). You have NO chat partner. You MUST act via tools only.\n\nWhen assigned a class/module to implement:\n1. Write complete, syntactically correct Java code.\n2. Call save_file ONCE to save it to the correct src/ path.\n3. Call compile_file ONCE. Read the EXACT return value.\n4. If compile_file returns COMPILE_FAILED with errors: fix the Java syntax in the code, call save_file again with the corrected code (to OVERWRITE the broken file), then call compile_file again.\n5. Repeat fix->save->compile until compile_file returns COMPILE_SUCCESS.\n6. When COMPILE_SUCCESS is confirmed, STOP all tool calls and output: COMPILE_SUCCESS: [filename].\n\nCRITICAL: NEVER say COMPILE_SUCCESS unless compile_file explicitly returned COMPILE_SUCCESS. Trust the tool return value, not your own judgment.");
@@ -307,7 +310,7 @@ global {
 
 	init {
 		create AI_Manager {
-			location <- {50.0, 15.0};
+			location <- {50.0, 15.0, 45.0};
 			registered_tools <- ["create_team_lead", "assign_lead_task"];
 			llm <- create_ollama_chat_model(url: "http://localhost:11434", model_name: llmname);
 			chat_memory <- create_chat_memory(llm, "You are an autonomous IT Project Manager. You have NO chat partner. EVERY action you take MUST be a tool call (create_team_lead or assign_lead_task). You MUST NEVER ask anyone to provide code or information to you in text.\n\nPROJECT DELIVERABLES (Java Swing GUI Desktop App):\n1. Backend: Data model (Student.java with id, name, email, score) and Business Service (StudentService.java for sorting, filtering >= 60.0, average/min/max statistics).\n2. Frontend/UI: Graphical User Interface (StudentUI.java using Java Swing JFrame, JTable, add student form, sort/filter buttons, analytics panel) and Main Launcher (MainApp.java).\n3. End-to-end: All modules compiled cleanly with compile_file.\n\nRULES:\n- ALWAYS use tools. Create BackendLead (for Model & Service) and FrontendLead (for Swing GUI & MainApp).\n- Do NOT output [TASK_COMPLETED] after only one sub-agent finishes.\n- Output [TASK_COMPLETED] ONLY when ALL backend and UI modules are delivered and verified.");
@@ -362,6 +365,7 @@ species AI_Developer skills: [llm] parallel:true {
 	string gama_compile_status <- "";
 	string target_file_path <- "";
 	string rid <- nil;
+	float z_level <- 0.0;
 
 	// Non-blocking async dispatch
 	reflex send_dev when: (status = "working") and (not empty(inbox)) and (rid = nil) and (cycle > assigned_cycle) {
@@ -470,7 +474,7 @@ species AI_Developer skills: [llm] parallel:true {
 		rgb node_color <- is_waiting_llm ? #orange : (is_done ? rgb(50, 205, 50) : #gray);
 		float base_r <- 4.0;
 		
-		// 1. Connection line to TeamLead
+		// 1. Connection line to TeamLead (in 3D)
 		if (lead_owner != "") {
 			list<AI_TeamLead> owners <- AI_TeamLead where (each.name = lead_owner);
 			if (not empty(owners)) {
@@ -481,25 +485,26 @@ species AI_Developer skills: [llm] parallel:true {
 		
 		// 2. Thinking Animation ONLY when waiting for LLM result (rid != nil)
 		if (is_waiting_llm) {
-			// Pulsing ring
+			// Pulsing ring (3D sphere shell)
 			float pulse <- 1.0 + 0.3 * sin(cycle * 8.0);
-			draw circle((base_r + 2.5) * pulse) color: #orange wireframe: true width: 1.5;
+			draw sphere((base_r + 2.5) * pulse) color: #orange wireframe: true width: 1.5;
 			
-			// 3 orbiting thinking dots
+			// 3 orbiting thinking dots in 3D space
 			int nb_dots <- 3;
 			loop i from: 0 to: nb_dots - 1 {
 				float dot_angle <- (cycle * 15.0 + i * (360.0 / nb_dots)) mod 360.0;
 				float dot_dist <- base_r + 3.0;
-				point dot_pos <- location + {cos(dot_angle) * dot_dist, sin(dot_angle) * dot_dist};
-				draw circle(1.0) at: dot_pos color: #yellow;
+				float dot_z <- location.z + 2.0 * sin(cycle * 5.0 + i * 120.0);
+				point dot_pos <- location + {cos(dot_angle) * dot_dist, sin(dot_angle) * dot_dist, dot_z};
+				draw sphere(1.0) at: dot_pos color: #yellow;
 			}
 		}
 		
-		// 3. Core Developer Node
-		draw circle(base_r) color: node_color;
+		// 3. Core Developer Node (3D sphere)
+		draw sphere(base_r) color: node_color;
 		
 		// 4. Status Badge & Name
-		draw (name + " [" + (is_waiting_llm ? "thinking" : status) + "]") at: location + {-4.5, 6.5} color: is_waiting_llm ? #yellow : (is_done ? #lightgreen : #white) font: font("Helvetica", 10, #bold);
+		draw (name + " [" + (is_waiting_llm ? "thinking" : status) + "]") at: location + {-6.0, 8.0, 0.0} color: is_waiting_llm ? #yellow : (is_done ? #lightgreen : #white) font: font("Helvetica", 10, #bold);
 	}
 }
 
@@ -514,10 +519,11 @@ species AI_TeamLead skills: [llm] parallel:true{
 	list<string> inbox <- [];
 	string status <- "idle";
 	string last_response <- "";
- 	int assigned_cycle <- -1;
- 	int lead_stuck_count <- 0;
- 	int empty_response_count <- 0;
- 	string rid <- nil;
+	int assigned_cycle <- -1;
+	int lead_stuck_count <- 0;
+	int empty_response_count <- 0;
+	string rid <- nil;
+	float z_level <- 20.0;
 
 	// Non-blocking async dispatch
 	reflex send_lead when: (status = "working" or status = "evaluating") and (not empty(inbox)) and (rid = nil) and (cycle > assigned_cycle) {
@@ -532,27 +538,6 @@ species AI_TeamLead skills: [llm] parallel:true{
 		write "[CYCLE " + cycle + "] [" + active_caller + "] coordinating domain asynchronously:";
 		write combined_msg;
 		write "========================================";
-		
-		// Automatically ensure sub-developers exist for this domain
-		if (name contains "Backend") {
-			if (empty(AI_Developer where (each.name = "StudentModelDev"))) {
-				string r1 <- world.create_developer("Model Developer", "StudentModelDev");
-				string r2 <- world.assign_dev_task("Implement src/com/ctu/model/Student.java with id, name, email, score (double) with getters, setters, and toString.", "StudentModelDev");
-			}
-			if (empty(AI_Developer where (each.name = "StudentServiceDev"))) {
-				string r1 <- world.create_developer("Service Developer", "StudentServiceDev");
-				string r2 <- world.assign_dev_task("Implement src/com/ctu/service/StudentService.java with methods to sortByScoreDesc, filterPassing (>=60.0), and computeAverageScore, getHighestScore, getLowestScore.", "StudentServiceDev");
-			}
-		} else if (name contains "Frontend") {
-			if (empty(AI_Developer where (each.name = "StudentUIDev"))) {
-				string r1 <- world.create_developer("UI Developer", "StudentUIDev");
-				string r2 <- world.assign_dev_task("Implement src/com/ctu/ui/StudentUI.java using Java Swing JFrame, JTable, Add Student input form, sort/filter buttons, and analytics summary panel.", "StudentUIDev");
-			}
-			if (empty(AI_Developer where (each.name = "MainAppDev"))) {
-				string r1 <- world.create_developer("App Launcher Developer", "MainAppDev");
-				string r2 <- world.assign_dev_task("Implement src/com/ctu/app/MainApp.java that runs SwingUtilities.invokeLater to launch and display StudentUI.", "MainAppDev");
-			}
-		}
 		
 		rid <- send_to_llm_async(llm, combined_msg, true, true);
 		active_caller <- "System";
@@ -570,29 +555,23 @@ species AI_TeamLead skills: [llm] parallel:true{
 				empty_response_count <- empty_response_count + 1;
 				write "[CYCLE " + cycle + "] [" + active_caller + "] EMPTY RESPONSE (#" + empty_response_count + ") - Auto-recovering...";
 				
-				if (empty_response_count >= 3) {
-					if (name contains "Backend") {
-						if (empty(AI_Developer where (each.name = "StudentModelDev"))) {
-							string tool_result <- world.create_developer("Model Developer", "StudentModelDev");
-							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
-							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
-						} else if (empty(AI_Developer where (each.name = "StudentServiceDev"))) {
-							string tool_result <- world.create_developer("Service Developer", "StudentServiceDev");
-							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
-							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
-						}
-					} else if (name contains "Frontend") {
-						if (empty(AI_Developer where (each.name = "StudentUIDev"))) {
-							string tool_result <- world.create_developer("UI Developer", "StudentUIDev");
-							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
-							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
-						} else if (empty(AI_Developer where (each.name = "MainAppDev"))) {
-							string tool_result <- world.create_developer("App Launcher Developer", "MainAppDev");
-							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
-							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
-						}
+		if (empty_response_count >= 3) {
+				// Auto-recovery: create a generic developer if none exist
+				string my_name <- name;
+				int existing_devs <- length(AI_Developer where (each.name contains my_name));
+				if (existing_devs = 0) {
+					string tool_result <- world.create_developer("Software Developer for " + my_name, "Dev" + my_name + cycle);
+					write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-created: " + tool_result;
+					do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
+				} else {
+					// Ask Manager to reassign
+					ask AI_Manager {
+						self.inbox << "TeamLead " + myself.name + " is stuck. Please reassign a task.";
+						self.status <- "evaluating";
+						self.assigned_cycle <- cycle;
 					}
 				}
+			}
 				
 				last_response <- "Auto-recovery: created missing developer";
 				status <- "waiting";
@@ -671,32 +650,33 @@ species AI_TeamLead skills: [llm] parallel:true{
 		rgb node_color <- is_waiting_llm ? #cyan : rgb(255, 215, 0);
 		float base_r <- 6.0;
 		
-		// 1. Connection line to Project Manager
+		// 1. Connection line to Project Manager (in 3D)
 		ask AI_Manager {
-			draw line([myself.location, self.location]) color: is_waiting_llm ? rgb(0, 220, 255, 120) : rgb(100, 100, 100, 80) width: 1.2;
+			draw line([myself.location, self.location]) color: is_waiting_llm ? rgb(0, 220, 255, 120) : rgb(100, 100, 100, 80) width: 1.5;
 		}
 		
 		// 2. Thinking Animation ONLY when waiting for LLM result (rid != nil)
 		if (is_waiting_llm) {
-			// Pulsing ring
+			// Pulsing ring (3D sphere shell)
 			float pulse <- 1.0 + 0.3 * sin(cycle * 6.0);
-			draw circle((base_r + 3.0) * pulse) color: #cyan wireframe: true width: 1.8;
+			draw sphere((base_r + 3.0) * pulse) color: #cyan wireframe: true width: 1.8;
 			
-			// 3 orbiting thinking dots
+			// 3 orbiting thinking dots in 3D space
 			int nb_dots <- 3;
 			loop i from: 0 to: nb_dots - 1 {
 				float dot_angle <- (cycle * 12.0 + i * (360.0 / nb_dots)) mod 360.0;
 				float dot_dist <- base_r + 4.0;
-				point dot_pos <- location + {cos(dot_angle) * dot_dist, sin(dot_angle) * dot_dist};
-				draw circle(1.2) at: dot_pos color: #cyan;
+				float dot_z <- location.z + 3.0 * sin(cycle * 4.0 + i * 120.0);
+				point dot_pos <- location + {cos(dot_angle) * dot_dist, sin(dot_angle) * dot_dist, dot_z};
+				draw sphere(1.2) at: dot_pos color: #cyan;
 			}
 		}
 		
-		// 3. Core TeamLead Node
-		draw circle(base_r) color: node_color;
+		// 3. Core TeamLead Node (3D sphere)
+		draw sphere(base_r) color: node_color;
 		
 		// 4. Status Badge & Name
-		draw (name + " [" + (is_waiting_llm ? "thinking" : status) + "]") at: location + {-5.5, 8.5} color: is_waiting_llm ? #cyan : #gold font: font("Helvetica", 11, #bold);
+		draw (name + " [" + (is_waiting_llm ? "thinking" : status) + "]") at: location + {-7.0, 10.0, 0.0} color: is_waiting_llm ? #cyan : #gold font: font("Helvetica", 11, #bold);
 	}
 }
 
@@ -711,10 +691,11 @@ species AI_Manager skills: [llm] parallel:true{
 	list<string> inbox <- [];
 	string status <- "planning";
 	string last_response <- "";
- 	int assigned_cycle <- -1;
- 	int stuck_repeat_count <- 0;
- 	int empty_response_count <- 0;
- 	string rid <- nil;
+	int assigned_cycle <- -1;
+	int stuck_repeat_count <- 0;
+	int empty_response_count <- 0;
+	string rid <- nil;
+	float z_level <- 45.0;
 
 	// Non-blocking async dispatch
 	reflex send_manager when: (status = "planning" or status = "evaluating") and (not empty(inbox)) and (rid = nil) and (cycle > assigned_cycle) {
@@ -729,16 +710,6 @@ species AI_Manager skills: [llm] parallel:true{
 		write "[CYCLE " + cycle + "] [" + active_caller + "] strategic review asynchronously:";
 		write combined_msg;
 		write "========================================";
-		
-		// Automatically ensure BackendLead and FrontendLead exist
-		if (empty(AI_TeamLead where (each.name = "BackendLead"))) {
-			string r1 <- world.create_team_lead("Backend Domain: Model and Business Services", "BackendLead");
-			string r2 <- world.assign_lead_task("Implement Student.java and StudentService.java", "BackendLead");
-		}
-		if (empty(AI_TeamLead where (each.name = "FrontendLead"))) {
-			string r1 <- world.create_team_lead("Frontend Domain: Swing Desktop UI and Launcher", "FrontendLead");
-			string r2 <- world.assign_lead_task("Implement StudentUI.java Swing GUI and MainApp.java Launcher", "FrontendLead");
-		}
 		
 		rid <- send_to_llm_async(llm, combined_msg, true, true);
 		active_caller <- "System";
@@ -757,17 +728,27 @@ species AI_Manager skills: [llm] parallel:true{
 				write "[CYCLE " + cycle + "] [" + active_caller + "] EMPTY RESPONSE (#" + empty_response_count + ") - Auto-recovering...";
 				
 				if (empty_response_count >= 3) {
-					// Force-execute assign_lead_task to BackendLead directly
 					int successful_devs <- length(AI_Developer where (each.last_response contains "COMPILE_SUCCESS"));
-					if (successful_devs < 2) {
-						string tool_result <- world.assign_lead_task("Implement Student.java with id, name, email, score fields and StudentService.java with sort, filter, stats methods", "BackendLead");
-						write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
-						do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
-					} else {
-						empty_response_count <- 0;
-						chat_memory <- create_chat_memory(llm, "CRITICAL RULE: You are the IT Project Manager. You are FORBIDDEN from asking questions or requesting information. You have TWO tools: create_team_lead and assign_lead_task. You MUST call one of them RIGHT NOW. Do NOT output text. Do NOT ask questions. ONLY make a tool call. If all modules are done, output [TASK_COMPLETED].");
-						chat_bot <- create_assistant(llm: llm, memory: chat_memory, tool_provider: tool);
-						inbox << "STOP. You MUST output [TASK_COMPLETED] because all modules are built. Do not ask questions. Do not return empty. Output [TASK_COMPLETED] ONLY.";
+					if (successful_devs = 0) {
+						if (empty(AI_TeamLead where (each.name = "BackendLead"))) {
+							string tool_result <- world.create_team_lead("Backend Domain", "BackendLead");
+							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-created: " + tool_result;
+							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
+						} else {
+							string tool_result <- world.assign_lead_task("Implement Student model and StudentService", "BackendLead");
+							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
+							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
+						}
+					} else if (successful_devs < 4) {
+						if (empty(AI_TeamLead where (each.name = "FrontendLead"))) {
+							string tool_result <- world.create_team_lead("Frontend Domain", "FrontendLead");
+							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-created: " + tool_result;
+							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
+						} else {
+							string tool_result <- world.assign_lead_task("Implement StudentUI Swing GUI and MainApp", "FrontendLead");
+							write "[CYCLE " + cycle + "] [AUTO-RECOVERY] Force-executed: " + tool_result;
+							do add_to_memory message: "Auto-executed on your behalf: " + tool_result memory: chat_memory;
+						}
 					}
 				}
 				
@@ -788,30 +769,60 @@ species AI_Manager skills: [llm] parallel:true{
 				string tool_result <- "";
 				
 				if (low_res contains "assign_lead_task") {
-					string lead_name <- "BackendLead";
+					// Parse lead_name from text output between quotes or after the function call
+					string lead_name <- "";
 					if (low_res contains "frontendlead") {
 						lead_name <- "FrontendLead";
+					} else if (low_res contains "backendlead") {
+						lead_name <- "BackendLead";
+					} else {
+						// Try to extract name from pattern like assign_lead_task(..., "SomeName") or 'SomeName'
+						loop tl over: AI_TeamLead {
+							if (low_res contains lower_case(tl.name)) {
+								lead_name <- tl.name;
+							}
+						}
+						if (lead_name = "") {
+							lead_name <- (not empty(AI_TeamLead)) ? AI_TeamLead[0].name : "BackendLead";
+						}
 					}
-					string task_msg <- "";
+					// Build task message from text or use default
+					string task_msg <- "Implement the assigned modules";
+					string domain_task <- "Domain implementation";
 					if (lead_name = "BackendLead") {
 						task_msg <- "Implement Student.java with id, name, email, score fields and StudentService.java with sort, filter, stats methods";
-					} else {
+						domain_task <- "Backend Domain: Model and Business Services";
+					} else if (lead_name = "FrontendLead") {
 						task_msg <- "Implement StudentUI.java Swing GUI with JTable and MainApp.java launcher";
+						domain_task <- "Frontend Domain: Swing Desktop UI and Launcher";
+					}
+					
+					// If the lead doesn't exist yet, create it first
+					if (empty(AI_TeamLead where (each.name = lead_name))) {
+						tool_result <- world.create_team_lead(domain_task, lead_name);
+						write "[CYCLE " + cycle + "] [" + active_caller + "] Auto-created lead first: " + tool_result;
 					}
 					tool_result <- world.assign_lead_task(task_msg, lead_name);
 				} else {
+					// create_team_lead - parse domain_task and lead_name
 					string lead_name <- "BackendLead";
 					if (low_res contains "frontendlead") {
 						lead_name <- "FrontendLead";
 					}
 					string domain_task <- "Domain implementation";
+					if (lead_name = "BackendLead") {
+						domain_task <- "Backend Domain: Model and Business Services";
+					} else if (lead_name = "FrontendLead") {
+						domain_task <- "Frontend Domain: Swing Desktop UI and Launcher";
+					}
 					tool_result <- world.create_team_lead(domain_task, lead_name);
 				}
 				
 				write "[CYCLE " + cycle + "] [" + active_caller + "] TEXT TOOL RESULT: " + tool_result;
 				do add_to_memory message: "Tool executed on your behalf: " + tool_result memory: chat_memory;
 				last_response <- tool_result;
-				status <- "waiting";
+				status <- "evaluating";
+				assigned_cycle <- cycle;
 			} else {
 				bool is_stuck <- (low_res contains "please provide") or (low_res contains "can you provide") 
 				              or (low_res contains "could you provide") or (low_res contains "i need you to")
@@ -839,9 +850,9 @@ species AI_Manager skills: [llm] parallel:true{
 					} else {
 						string action_cmd;
 						if (successful_devs < 2) {
-							action_cmd <- "Call assign_lead_task(task_msg: 'Implement Student.java with id, name, email, score fields and StudentService.java with sort, filter, stats methods', lead_name: 'BackendLead') NOW.";
+							action_cmd <- "Call assign_lead_task(task_msg: 'Implement Student.java and StudentService.java', lead_name: 'BackendLead') NOW.";
 						} else {
-							action_cmd <- "Call assign_lead_task(task_msg: 'Implement StudentUI.java Swing GUI with JTable and MainApp.java launcher', lead_name: 'FrontendLead') NOW.";
+							action_cmd <- "Call assign_lead_task(task_msg: 'Implement StudentUI.java Swing GUI and MainApp.java', lead_name: 'FrontendLead') NOW.";
 						}
 						inbox << "STOP ASKING QUESTIONS. " + action_cmd + " You have tools. Use them. NO TEXT RESPONSE ALLOWED - ONLY A TOOL CALL.";
 					}
@@ -849,10 +860,10 @@ species AI_Manager skills: [llm] parallel:true{
 					stuck_repeat_count <- 0;
 					do add_to_memory message: "Manager Log: " + res memory: chat_memory;
 					
-					int successful_devs <- length(AI_Developer where (each.last_response contains "COMPILE_SUCCESS"));
-					bool has_multiple_devs <- successful_devs >= 2;
+			int successful_devs <- length(AI_Developer where (each.last_response contains "COMPILE_SUCCESS"));
+				bool all_devs_complete <- successful_devs >= 4;
 					
-					if (has_multiple_devs) {
+					if (all_devs_complete) {
 						write "========================================";
 						write "[CYCLE " + cycle + "] MANAGER: FULL JAVA SWING GUI APPLICATION ACCOMPLISHED & VERIFIED ACROSS ALL MODULES!";
 						write "[CYCLE " + cycle + "] LAUNCHING JAVA SWING GUI APPLICATION ON SCREEN...";
@@ -894,35 +905,37 @@ species AI_Manager skills: [llm] parallel:true{
 		
 		// Thinking Animation ONLY when waiting for LLM (rid != nil)
 		if (is_waiting_llm) {
-			// Pulsing ring
+			// Pulsing ring (3D sphere shell)
 			float pulse <- 1.0 + 0.3 * sin(cycle * 5.0);
-			draw circle((base_r + 3.5) * pulse) color: #dodgerblue wireframe: true width: 2.0;
+			draw sphere((base_r + 3.5) * pulse) color: #dodgerblue wireframe: true width: 2.0;
 			
-			// 4 orbiting thinking dots
+			// 4 orbiting thinking dots in 3D space
 			int nb_dots <- 4;
 			loop i from: 0 to: nb_dots - 1 {
 				float dot_angle <- (cycle * 10.0 + i * (360.0 / nb_dots)) mod 360.0;
 				float dot_dist <- base_r + 5.0;
-				point dot_pos <- location + {cos(dot_angle) * dot_dist, sin(dot_angle) * dot_dist};
-				draw circle(1.5) at: dot_pos color: #deepskyblue;
+				float dot_z <- location.z + 2.0 * cos(cycle * 3.0 + i * 90.0);
+				point dot_pos <- location + {cos(dot_angle) * dot_dist, sin(dot_angle) * dot_dist, dot_z};
+				draw sphere(1.5) at: dot_pos color: #deepskyblue;
 			}
 		}
 		
-		// Core Manager Node
-		draw circle(base_r) color: node_color;
+		// Core Manager Node (3D sphere)
+		draw sphere(base_r) color: node_color;
 		
 		// Status Badge & Title
-		draw ("PROJECT MANAGER [" + (is_waiting_llm ? "thinking" : status) + "]") at: location + {-9.5, 11.5} color: #dodgerblue font: font("Helvetica", 12, #bold);
+		draw ("PROJECT MANAGER [" + (is_waiting_llm ? "thinking" : status) + "]") at: location + {-10.0, 12.0, 0.0} color: #dodgerblue font: font("Helvetica", 12, #bold);
 	}
 }
 
 experiment "main" type: gui {
 	float minimum_cycle_duration <- 0.04;
 	output {
-		display Field type: opengl background: #black {
-			species AI_Manager;
-			species AI_TeamLead;
-			species AI_Developer;
+		display "Virtual Universe" type: opengl background: #black { 
+			
+			species AI_Manager aspect: default;
+			species AI_TeamLead aspect: default;
+			species AI_Developer aspect: default;
 		}
 	}
 }
