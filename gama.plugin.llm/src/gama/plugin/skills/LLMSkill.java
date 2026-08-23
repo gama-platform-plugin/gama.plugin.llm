@@ -276,7 +276,11 @@ public class LLMSkill extends Skill {
 	public IList<String> fetch_chat_memory(final IScope scope) {
 		final Memory chatMemory = (Memory) scope.getArg("memory", MemoryType.id);
 		IList<String> msgs = GamaListFactory.create();
-		chatMemory.getMemory().messages().stream().forEach((c) -> msgs.add(c.toString()));
+		if (chatMemory != null) {
+			synchronized (chatMemory) {
+				chatMemory.getMemory().messages().stream().forEach((c) -> msgs.add(c.toString()));
+			}
+		}
 
 		return msgs;
 

@@ -140,14 +140,9 @@ public class ToolProvider implements IValue {
 		}; 
 		try {
 			ToolSpecification toolSpec = parseToolSpecification(json);
-			System.out.println("ToolSpecification created successfully:");
-			System.out.println("Name: " + toolSpec.name());
-			System.out.println("Description: " + toolSpec.description());
-			System.out.println("Parameters: " + toolSpec.parameters());
-
 			addTool(toolSpec, toolExecutor);
 		} catch (JsonProcessingException e) {
-			System.err.println("Error parsing JSON string: " + e.getMessage());
+			throw GamaRuntimeException.create(e, scope);
 		}
 
 	}

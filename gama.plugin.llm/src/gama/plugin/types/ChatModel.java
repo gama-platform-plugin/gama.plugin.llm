@@ -132,7 +132,7 @@ public class ChatModel implements IValue {
 			this.topK = topK;
 		}
 		modelTobuild=modelTobuild.timeout(Duration.ofMillis(1200000));
-		model = modelTobuild.logRequests(true).build();
+		model = modelTobuild.build();
 		
 
 	} 
@@ -188,7 +188,7 @@ public class ChatModel implements IValue {
 			this.topP = topP;
 		}
 
-		model = modelTobuild.logRequests(true).build();
+		model = modelTobuild.build();
 	}
 	
 	
@@ -197,26 +197,31 @@ public class ChatModel implements IValue {
 	}
 
 	public String askQuestion(String prompt, boolean addPromptToMemory, boolean addAnswerToMemory, boolean UseMemory) {
-			
-			if (UseMemory && memory != null && addPromptToMemory) 
-				memory.addToMemory(prompt);
-			List<ChatMessage> fullConversation = (UseMemory && memory != null) ? new ArrayList<>(memory.getMemory().messages()) : new ArrayList<>();
+			List<ChatMessage> fullConversation = new ArrayList<>();
+			if (UseMemory && memory != null) {
+				synchronized (memory) {
+					if (addPromptToMemory) {
+						memory.addToMemory(prompt);
+					}
+					fullConversation.addAll(memory.getMemory().messages());
+				}
+			}
 			UserMessage currentMessage = UserMessage.from(prompt);
 			fullConversation.add(currentMessage); 
 			
 			ChatResponse response = model.chat(fullConversation);
-			if(UseMemory && memory != null && addAnswerToMemory) {
-				memory.getMemory().add(response.aiMessage());
+			if (UseMemory && memory != null && addAnswerToMemory) {
+				synchronized (memory) {
+					memory.getMemory().add(response.aiMessage());
+				}
 			}
 			return response.aiMessage().text();
-	
 	}
 
 	/**
 	 * Non-blocking version of askQuestion. Returns a Callable that, when executed,
 	 * performs the LLM call and returns the result. The prompt is added to memory
-	 * synchronously (caller's thread), but the answer is added to memory only when
-	 * the result is consumed (via addAnswerToMemoryToMemory).
+	 * synchronously (caller's thread), and the answer is safely added to memory in background.
 	 * 
 	 * @param prompt the prompt to send
 	 * @param addPromptToMemory whether to add the prompt to memory now (synchronous)
@@ -225,12 +230,15 @@ public class ChatModel implements IValue {
 	 * @return a Callable that produces the LLM response text
 	 */
 	public Callable<String> askQuestionAsync(String prompt, boolean addPromptToMemory, boolean addAnswerToMemory, boolean UseMemory) {
-		// Add prompt to memory synchronously (on agent's thread)
-		if (UseMemory && memory != null && addPromptToMemory)
-			memory.addToMemory(prompt);
-		
-		// Capture the conversation state now (on agent's thread)
-		List<ChatMessage> fullConversation = (UseMemory && memory != null) ? new ArrayList<>(memory.getMemory().messages()) : new ArrayList<>();
+		List<ChatMessage> fullConversation = new ArrayList<>();
+		if (UseMemory && memory != null) {
+			synchronized (memory) {
+				if (addPromptToMemory) {
+					memory.addToMemory(prompt);
+				}
+				fullConversation.addAll(memory.getMemory().messages());
+			}
+		}
 		UserMessage currentMessage = UserMessage.from(prompt);
 		fullConversation.add(currentMessage);
 		
@@ -241,7 +249,9 @@ public class ChatModel implements IValue {
 		return () -> {
 			ChatResponse response = model.chat(fullConversation);
 			if (finalUseMemory && memory != null && finalAddAnswer) {
-				memory.getMemory().add(response.aiMessage());
+				synchronized (memory) {
+					memory.getMemory().add(response.aiMessage());
+				}
 			}
 			return response.aiMessage().text();
 		};

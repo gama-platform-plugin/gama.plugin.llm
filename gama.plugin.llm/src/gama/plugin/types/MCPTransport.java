@@ -44,8 +44,7 @@ public class MCPTransport implements IValue {
 	
 	public MCPTransport(String urlToAdd, Integer timeout) {
 		super();
-		transport = new HttpMcpTransport.Builder().sseUrl(urlToAdd).timeout(Duration.ofSeconds(timeout))
-				.logRequests(true).logResponses(true).build();
+		transport = new HttpMcpTransport.Builder().sseUrl(urlToAdd).timeout(Duration.ofSeconds(timeout)).build();
 
 	}
 	

@@ -51,11 +51,11 @@ public class Memory implements IValue {
 		model.setMemory(this);
 	}
 	
-	public ChatMemory getMemory() {
+	public synchronized ChatMemory getMemory() {
 		return memory;
 	}
 
-	public void addToMemory(String msgToAdd) {
+	public synchronized void addToMemory(String msgToAdd) {
 		if (msgToAdd == null) return;
 		SystemMessage systemMessage = SystemMessage.from(msgToAdd);
 		memory.add(systemMessage); 
